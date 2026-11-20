@@ -6,6 +6,7 @@ const cors = require('cors');
 
 const groupRoutes = require('./routes/groupRoutes');
 const googleRoutes = require('./routes/googleRoutes');
+const integrationRoutes = require('./routes/integrationRoutes');
 const {
     startAnnouncementScheduler
 } = require('./services/announcementScheduler');
@@ -27,6 +28,7 @@ app.use(express.static('public'));
 
 app.use('/api/groups', groupRoutes);
 app.use('/auth', googleRoutes);
+app.use('/api/integrations', integrationRoutes);
 
 // First route
 app.get('/', (req, res) => {
