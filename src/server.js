@@ -9,6 +9,13 @@ const googleRoutes = require('./routes/googleRoutes');
 const {
     startAnnouncementScheduler
 } = require('./services/announcementScheduler');
+const {
+    oauth2Client
+} = require('./integrations/google/googleClient');
+
+const {
+    loadGoogleTokens
+} = require('./integrations/google/googleTokenStorage');
 
 const app = express();
 
@@ -31,7 +38,19 @@ app.get('/', (req, res) => {
 // Server
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-     startAnnouncementScheduler();
-});
+const startServer = async () => {
+    try {
+        await loadGoogleTokens(oauth2Client);
+
+        app.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}`);
+            startAnnouncementScheduler();
+        });
+
+    } catch (error) {
+        console.error('Server startup error:', error.message);
+        process.exit(1);
+    }
+};
+
+startServer();

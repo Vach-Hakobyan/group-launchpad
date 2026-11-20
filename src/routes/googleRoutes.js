@@ -1,7 +1,5 @@
 
 const express = require('express');
-const fs = require('fs/promises');
-const path = require('path');
 
 const router = express.Router();
 
@@ -10,10 +8,9 @@ const {
     getGoogleAuthUrl
 } = require('../integrations/google/googleClient');
 
-const tokenPath = path.join(
-    __dirname,
-    '../../.tokens/google-token.json'
-);
+const {
+    saveGoogleTokens
+} = require('../integrations/google/googleTokenStorage');
 
 router.get('/google', (req, res) => {
     const url = getGoogleAuthUrl();
@@ -32,20 +29,17 @@ router.get('/google/callback', async (req, res) => {
     try {
         const { tokens } = await oauth2Client.getToken(code);
 
-        oauth2Client.setCredentials(tokens);
+        // Сохраняем старый refresh_token, если Google его не вернул
+        const updatedTokens = {
+            ...oauth2Client.credentials,
+            ...tokens
+        };
 
-        await fs.mkdir(path.dirname(tokenPath), {
-            recursive: true
-        });
+        oauth2Client.setCredentials(updatedTokens);
 
-        await fs.writeFile(
-            tokenPath,
-            JSON.stringify(tokens, null, 2),
-            { mode: 0o600 }
-        );
+        await saveGoogleTokens(updatedTokens);
 
         console.log('Google authorization successful');
-        console.log('Google tokens saved');
 
         res.json({
             message: 'Google account connected successfully'
